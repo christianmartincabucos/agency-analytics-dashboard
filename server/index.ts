@@ -3,6 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDemoDashboard } from '../shared/demo-dashboard.js';
+import { splitInflowwRange } from '../shared/infloww-windows.js';
 
 type Row = Record<string, any>;
 const app = express();
@@ -29,8 +30,6 @@ app.use((req, res, next) => { if (req.method !== 'GET' && req.path.startsWith('/
 
 const number = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 const money = (v: unknown) => number(v) / divisor;
-const dateKey = (d: Date) => d.toISOString().slice(0, 10);
-
 async function get(pathname: string, params: Record<string, string | number | undefined> = {}) {
   const url = new URL(`${base}${pathname}`);
   for (const [key, value] of Object.entries(params)) if (value !== undefined) url.searchParams.set(key, String(value));
@@ -44,7 +43,7 @@ async function get(pathname: string, params: Record<string, string | number | un
         continue;
       }
       const body: any = await response.json().catch(() => ({}));
-      if (!response.ok) { const error: any = new Error(`${response.status}: ${body.message || body.msg || 'Infloww request failed'}`); error.status = response.status; error.requestId = response.headers.get('x-request-id'); throw error; }
+      if (!response.ok) { const error: any = new Error(`${response.status}: ${body.errorMessage || body.message || body.msg || 'Infloww request failed'}`); error.status = response.status; error.requestId = response.headers.get('x-request-id'); throw error; }
       return body;
     }
   } finally { releaseRequestSlot(); }
@@ -65,14 +64,8 @@ async function all(pathname: string, params: Record<string, string | number> = {
 }
 
 async function windowed(pathname: string, params: Record<string, string | number>, start: Date, end: Date, dateOnly = false) {
-  const windows: Array<[Date, Date]> = [];
-  for (let cursor = new Date(start); cursor <= end;) {
-    const windowEnd = new Date(cursor); windowEnd.setUTCDate(windowEnd.getUTCDate() + 30);
-    if (windowEnd > end) windowEnd.setTime(end.getTime());
-    windows.push([new Date(cursor), windowEnd]);
-    cursor = new Date(windowEnd); cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-  const results = await Promise.all(windows.map(([from, to]) => all(pathname, { ...params, startTime: dateOnly ? dateKey(from) : String(from.getTime()), endTime: dateOnly ? dateKey(to) : String(to.getTime() + (dateOnly ? 0 : 86399999)) })));
+  const windows = splitInflowwRange(start, end, dateOnly);
+  const results = await Promise.all(windows.map(window => all(pathname, { ...params, ...window })));
   return results.flat();
 }
 
@@ -81,7 +74,7 @@ async function dashboard(days: number) {
   const safe = async <T>(name: string, task: () => Promise<T>, fallback: T): Promise<T> => { try { return await task(); } catch (e: any) { warnings.push(`${name}: ${e.message}${e.requestId ? ` (x-request-id ${e.requestId})` : ''}`); return fallback; } };
   const creatorsRaw = await all('/v1/creators', { platformCode: 'OnlyFans' });
   const creators = creatorsRaw.map((c, i) => ({ id: String(c.id ?? c.creatorId ?? i), name: String(c.name || c.nickName || c.userName || `Creator ${i + 1}`), handle: c.userName ? `@${String(c.userName).replace(/^@/, '')}` : '', revenue: 0, fans: 0, growth: 0 }));
-  const now = new Date(); const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 1); const start = new Date(end); start.setUTCDate(start.getUTCDate() - (days - 1));
+  const now = new Date(); const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 1); const start = new Date(end); start.setUTCHours(0, 0, 0, 0); start.setUTCDate(start.getUTCDate() - (days - 1));
   const daily = new Map<string, number>(); let revenue = 0;
   const transactionGroups = await Promise.all(creators.map(c => safe(`transactions ${c.name}`, () => windowed('/v1/transactions', { platformCode: 'OnlyFans', creatorId: c.id }, start, end), [])));
   transactionGroups.forEach((group, index) => {
