@@ -1,0 +1,16 @@
+<app-analytics-shell [creatorCount]="creatorCount()" [selectedNav]="selectedNav()" [demo]="data().demo" [generatedAt]="data().generatedAt" (navigate)="navigate($event)" (refreshRequested)="refresh()">
+  <div class="welcome">
+    <div><div class="eyebrow">{{ todayLabel }}</div><h1>Good morning, Christian <span>✦</span></h1><p>Here’s what’s happening across your agency.</p></div>
+    <app-range-selector [selected]="range()" (rangeSelected)="setRange($event)" (refreshRequested)="refresh()"/>
+  </div>
+
+  <app-data-notices [error]="error()" [warnings]="data().warnings" (retry)="refresh()"/>
+  <app-kpi-overview [totals]="data().totals"/>
+  <app-revenue-insights [daily]="data().daily" [range]="range()" [totals]="data().totals"/>
+  <app-creator-performance [creators]="data().creatorsList" (navigate)="navigate($event)"/>
+  <app-team-marketing [chatters]="data().chatters" [links]="data().links" (navigate)="navigate($event)"/>
+
+  <footer>Data syncs from Infloww · Last updated {{ data().generatedAt | date:'shortTime' }} <span>All times in your local timezone</span></footer>
+</app-analytics-shell>
+
+@if (loading()) { <div class="loading"><mat-spinner diameter="28"/><span>Syncing agency data…</span></div> }

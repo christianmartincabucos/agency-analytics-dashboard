@@ -44,10 +44,19 @@ Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOU
 
 ## Project structure
 
-- `src/app/` — standalone, Signals-first Angular dashboard using OnPush change detection
+- `src/app/design-system/atoms/` — foundational brand, status, and avatar primitives
+- `src/app/design-system/molecules/` — metric card, navigation item, and date-range selector
+- `src/app/design-system/organisms/` — sidebar, header, KPI overview, revenue insights, creator table, team and marketing panels, and data notices
+- `src/app/design-system/templates/` — reusable analytics shell that places organisms into the page layout
+- `src/app/pages/` — dashboard page with live data loading, state, and navigation
+- `src/app/models/` and `src/app/data/` — shared API view models and demo fixture data
+- `src/styles/dashboard.scss` — shared dashboard visual system styles
+- `src/app/` — standalone Angular components using Signals and OnPush change detection
 - `server/index.ts` — Express API proxy, endpoint aggregation, retry, pagination and cache
 - `.env.example` — safe configuration template; actual credentials belong in ignored `.env`
 - `proxy.conf.json` — local Angular-to-Express API proxy
+
+The UI hierarchy follows [Brad Frost’s Atomic Design stages](https://atomicdesign.bradfrost.com/chapter-2/): atoms form molecules, molecules and atoms assemble into organisms, templates arrange those sections, and the dashboard page supplies real or demo data.
 
 ## API references
 
