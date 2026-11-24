@@ -47,6 +47,7 @@ export class DashboardPageComponent {
 
   navigate(name: string) {
     this.selectedNav.set(name);
-    if (name !== 'Overview') document.getElementById(name.toLowerCase().replaceAll(' ', '-'))?.scrollIntoView({ behavior: 'smooth' });
+    if (name === 'Overview') window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    else document.getElementById(name.toLowerCase().replaceAll(' ', '-'))?.scrollIntoView?.({ behavior: 'smooth' });
   }
 }

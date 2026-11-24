@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getDemoDashboard } from '../shared/demo-dashboard.js';
 
 type Row = Record<string, any>;
 const app = express();
@@ -75,15 +76,6 @@ async function windowed(pathname: string, params: Record<string, string | number
   return results.flat();
 }
 
-const demo = {
-  demo: true, generatedAt: new Date().toISOString(), range: 30,
-  totals: { revenue: 84260, revenueChange: 12.8, creators: 18, fans: 24680, fanChange: 8.4, messages: 38420, ppvSales: 19270, clicks: 12840, conversions: 964 },
-  daily: Array.from({length: 14}, (_, i) => ({ label: ['Nov 11','Nov 12','Nov 13','Nov 14','Nov 15','Nov 16','Nov 17','Nov 18','Nov 19','Nov 20','Nov 21','Nov 22','Nov 23','Nov 24'][i], revenue: [4180,5260,4890,6330,5790,7100,6420,5930,6810,7240,6010,7880,7560,8240][i] })),
-  creatorsList: [{name:'Mia Rose',handle:'@miarose',revenue:18420,fans:5240,growth:18.2},{name:'Luna Vale',handle:'@lunavale',revenue:14280,fans:3980,growth:12.4},{name:'Sophie Lane',handle:'@sophielane',revenue:11960,fans:3420,growth:9.8},{name:'Ava Hart',handle:'@avahart',revenue:9840,fans:2910,growth:6.1},{name:'Nina Fox',handle:'@ninafox',revenue:8260,fans:2480,growth:-2.3}],
-  chatters: [{name:'Alex Morgan',revenue:12840,messages:8420,ppv:146},{name:'Jamie Chen',revenue:10920,messages:7680,ppv:128},{name:'Taylor Reed',revenue:9840,messages:7140,ppv:112},{name:'Jordan Blake',revenue:7620,messages:5930,ppv:84}],
-  links: [{name:'November VIP Push',creator:'Mia Rose',clicks:4280,conversions:342,value:8460},{name:'Black Friday Preview',creator:'Luna Vale',clicks:3620,conversions:289,value:7120},{name:'Welcome Offer 20%',creator:'Sophie Lane',clicks:2840,conversions:198,value:4960},{name:'New Year Warmup',creator:'Ava Hart',clicks:2100,conversions:135,value:3280}], warnings: []
-};
-
 async function dashboard(days: number) {
   const warnings: string[] = [];
   const safe = async <T>(name: string, task: () => Promise<T>, fallback: T): Promise<T> => { try { return await task(); } catch (e: any) { warnings.push(`${name}: ${e.message}${e.requestId ? ` (x-request-id ${e.requestId})` : ''}`); return fallback; } };
@@ -131,13 +123,19 @@ async function dashboard(days: number) {
   }));
   const links = (await Promise.all(creators.slice(0, 50).flatMap(c => ['TRACKING','TRIAL','CAMPAIGN'].map(linkType => safe(`links ${linkType} ${c.name}`, () => windowed('/v1/links', { platformCode: 'OnlyFans', creatorId: c.id, linkType }, start, end), []).then(rows => rows.map(l => ({ name: String(l.message || l.name || l.campaignCode || `Link ${l.id}`), creator: c.name, clicks: number(l.clickCount ?? l.clicksCount), conversions: number(l.subCount ?? l.subscribersCount ?? l.claimsCount), value: Math.round(money(l.earningsNet ?? l.earningsGross)) }))))))).flat().slice(0, 12);
   const activeCreators = creators.filter(c => c.name && !/^creator /i.test(c.name)).length;
-  return { demo: false, generatedAt: new Date().toISOString(), range: days, totals: { revenue: Math.round(revenue), revenueChange: null, creators: activeCreators, fans: fanCount, fanChange: null, messages, ppvSales: Math.round(ppvSales), clicks: links.reduce((s, x) => s + x.clicks, 0), conversions: links.reduce((s, x) => s + x.conversions, 0) }, daily: [...daily].map(([label, value]) => ({ label, revenue: Math.round(value) })).slice(-31), creatorsList: creators.sort((a, b) => b.revenue - a.revenue).slice(0, 15), chatters: chatters.sort((a, b) => b.revenue - a.revenue).slice(0, 10), links, warnings };
+  const dailySeries = Array.from({ length: days }, (_, offset) => {
+    const date = new Date(start);
+    date.setUTCDate(date.getUTCDate() + offset);
+    const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return { label, revenue: Math.round(daily.get(label) || 0) };
+  });
+  return { demo: false, generatedAt: new Date().toISOString(), range: days, totals: { revenue: Math.round(revenue), revenueChange: null, creators: activeCreators, fans: fanCount, fanChange: null, messages, ppvSales: Math.round(ppvSales), clicks: links.reduce((s, x) => s + x.clicks, 0), conversions: links.reduce((s, x) => s + x.conversions, 0) }, daily: dailySeries, creatorsList: creators.sort((a, b) => b.revenue - a.revenue).slice(0, 15), chatters: chatters.sort((a, b) => b.revenue - a.revenue).slice(0, 10), links, warnings };
 }
 
 app.get('/api/dashboard', async (req, res) => {
   const days = Math.min(90, Math.max(7, Number(req.query.days) || 30)); const key = String(days); const cached = cache.get(key);
   if (cached && Date.now() - cached.at < cacheTtl) return res.json(cached.data);
-  if (!process.env.INFLOWW_API_KEY || !process.env.INFLOWW_OID) return res.json({ ...demo, range: days });
+  if (!process.env.INFLOWW_API_KEY || !process.env.INFLOWW_OID) return res.json(getDemoDashboard(days));
   try { const data = await dashboard(days); cache.set(key, { at: Date.now(), data }); res.json(data); }
   catch (error: any) { res.status(error.status || 502).json({ error: error.message || 'Dashboard data could not be loaded', requestId: error.requestId }); }
 });

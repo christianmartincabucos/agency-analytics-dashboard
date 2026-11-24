@@ -14,7 +14,7 @@ Chart.register(...registerables);
   template: `
     <div class="overview-grid">
       <section class="panel chart-panel">
-        <div class="panel-head"><div><h2>Revenue overview</h2><p>Daily net earnings · {{ range() }} day period</p></div><button class="more" aria-label="More revenue options">•••</button></div>
+        <div class="panel-head"><div><h2>Revenue overview</h2><p>Daily net earnings · {{ range() }} day period</p></div><span class="more" aria-hidden="true">•••</span></div>
         <div class="chart"><canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions"></canvas></div>
         <div class="chart-legend"><i></i> Net revenue <span>·</span> <small>USD</small></div>
       </section>

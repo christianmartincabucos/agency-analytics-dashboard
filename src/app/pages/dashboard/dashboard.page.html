@@ -5,9 +5,9 @@
   </div>
 
   <app-data-notices [error]="error()" [warnings]="data().warnings" (retry)="refresh()"/>
-  <app-kpi-overview [totals]="data().totals"/>
+  <app-kpi-overview [totals]="data().totals" [demo]="data().demo"/>
   <app-revenue-insights [daily]="data().daily" [range]="range()" [totals]="data().totals"/>
-  <app-creator-performance [creators]="data().creatorsList" (navigate)="navigate($event)"/>
+  <app-creator-performance [creators]="data().creatorsList" [demo]="data().demo" (navigate)="navigate($event)"/>
   <app-team-marketing [chatters]="data().chatters" [links]="data().links" (navigate)="navigate($event)"/>
 
   <footer>Data syncs from Infloww · Last updated {{ data().generatedAt | date:'shortTime' }} <span>All times in your local timezone</span></footer>

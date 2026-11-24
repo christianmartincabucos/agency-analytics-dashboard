@@ -49,7 +49,7 @@ Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOU
 - `src/app/design-system/organisms/` — sidebar, header, KPI overview, revenue insights, creator table, team and marketing panels, and data notices
 - `src/app/design-system/templates/` — reusable analytics shell that places organisms into the page layout
 - `src/app/pages/` — dashboard page with live data loading, state, and navigation
-- `src/app/models/` and `src/app/data/` — shared API view models and demo fixture data
+- `shared/` — API view models and a range-aware demo fixture shared by the browser and BFF
 - `src/styles/dashboard.scss` — shared dashboard visual system styles
 - `src/app/` — standalone Angular components using Signals and OnPush change detection
 - `server/index.ts` — Express API proxy, endpoint aggregation, retry, pagination and cache
@@ -57,6 +57,10 @@ Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOU
 - `proxy.conf.json` — local Angular-to-Express API proxy
 
 The UI hierarchy follows [Brad Frost’s Atomic Design stages](https://atomicdesign.bradfrost.com/chapter-2/): atoms form molecules, molecules and atoms assemble into organisms, templates arrange those sections, and the dashboard page supplies real or demo data.
+
+## Unit tests
+
+Run `npm test` for the Angular/Vitest suite. It covers creator sorting and search, 7/30/90-day range selection and request parameters, range-specific data shapes, navigation, refresh controls, status notices, and promotion conversion rates.
 
 ## API references
 
