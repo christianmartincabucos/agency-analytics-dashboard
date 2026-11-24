@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DashboardData } from '../../models/dashboard.models';
 import { DEMO_DASHBOARD } from '../../data/demo-dashboard';
@@ -36,9 +36,14 @@ export class DashboardPageComponent {
     this.error.set('');
     this.http.get<DashboardData>(`/api/dashboard?days=${this.range()}`).subscribe({
       next: response => { this.data.set(response); this.loading.set(false); },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set('Could not reach the dashboard service. Start the Node server and check its configuration.');
+        if (error.status === 0) {
+          this.error.set('Could not reach the dashboard service. Start the Node server and check its configuration.');
+          return;
+        }
+        const detail = error.error?.error || error.error?.message || error.message || 'Unknown server error';
+        this.error.set(`Dashboard service returned ${error.status}: ${detail}`);
       },
     });
   }

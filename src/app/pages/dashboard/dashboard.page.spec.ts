@@ -53,6 +53,7 @@ describe('DashboardPageComponent', () => {
     requests.expectOne('/api/dashboard?days=30').flush({ message: 'upstream unavailable' }, { status: 502, statusText: 'Bad Gateway' });
 
     expect(page.loading()).toBe(false);
-    expect(page.error()).toContain('Could not reach the dashboard service');
+    expect(page.error()).toContain('Dashboard service returned 502');
+    expect(page.error()).toContain('upstream unavailable');
   });
 });

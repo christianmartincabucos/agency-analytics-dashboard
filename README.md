@@ -24,6 +24,14 @@ npm run serve
 
 The Express service serves the built Angular app on [http://localhost:4444](http://localhost:4444).
 
+## Deploy to Vercel
+
+This repo includes Vercel Node functions for `GET /api/dashboard` and `GET /api/health`, alongside the Angular static build. Import the repository into Vercel with the repository root as the project root. `vercel.json` sets the Angular build command and output directory.
+
+In **Project Settings → Environment Variables**, add `INFLOWW_API_KEY` and `INFLOWW_OID` for the Production environment (and Preview if needed). Add optional settings such as `INFLOWW_BASE_URL`, `CACHE_TTL_SECONDS`, `AMOUNT_DIVISOR`, and `API_CONCURRENCY` only when required. Redeploy after saving environment variables. Without credentials, the API returns demo data; use `/api/health` to confirm whether the deployment is in `live` or `demo` mode. Keep credentials in Vercel environment settings and never in Angular/browser variables.
+
+The Vercel API functions are GET-only. The dashboard service uses an in-memory cache per warm function instance; serverless instances may have separate caches.
+
 ## Live API integration
 
 The BFF currently reads:
@@ -52,7 +60,10 @@ Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOU
 - `shared/` — API view models and a range-aware demo fixture shared by the browser and BFF
 - `src/styles/dashboard.scss` — shared dashboard visual system styles
 - `src/app/` — standalone Angular components using Signals and OnPush change detection
-- `server/index.ts` — Express API proxy, endpoint aggregation, retry, pagination and cache
+- `server/index.ts` — local Express API proxy and static server
+- `server/dashboard-service.ts` — shared Infloww aggregation, retry, pagination, and cache logic
+- `api/` — GET-only Vercel serverless endpoints for dashboard and health
+- `vercel.json` — Angular build and static output configuration for Vercel
 - `.env.example` — safe configuration template; actual credentials belong in ignored `.env`
 - `proxy.conf.json` — local Angular-to-Express API proxy
 
@@ -67,4 +78,4 @@ Run `npm test` for the Angular/Vitest suite. It covers creator sorting and searc
 - [Infloww OpenAPI documentation](https://infloww-openapi.stoplight.io/)
 - [Infloww API base URL](https://openapi.infloww.com/v1)
 
-This workspace does not have a configured remote Git repository or hosting account. The app can be run locally using the commands above; deploy the Node service and built `dist/agency-analytics/browser` directory together to publish a live demo.
+To deploy elsewhere, host the built `dist/agency-analytics/browser` directory and the Node API service together, and configure the same server-side environment variables.
