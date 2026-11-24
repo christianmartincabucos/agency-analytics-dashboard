@@ -8,7 +8,7 @@ import { DashboardHeaderComponent } from '../../organisms/dashboard-header/dashb
   imports: [AgencySidebarComponent, DashboardHeaderComponent],
   template: `
     <div class="shell">
-      <app-agency-sidebar [creatorCount]="creatorCount()" [selected]="selectedNav()" (navigate)="navigate.emit($event)"/>
+      <app-agency-sidebar [creatorCount]="creatorCount()" [selected]="selectedNav()" [demo]="demo()" [generatedAt]="generatedAt()" [warningCount]="warningCount()" [loading]="loading()" (navigate)="navigate.emit($event)" (refreshRequested)="refreshRequested.emit()"/>
       <main class="main">
         <app-dashboard-header [demo]="demo()" [generatedAt]="generatedAt()" (refreshRequested)="refreshRequested.emit()"/>
         <section class="content"><ng-content/></section>
@@ -23,6 +23,8 @@ export class AnalyticsShellComponent {
   selectedNav = input('Overview');
   demo = input(false);
   generatedAt = input.required<string>();
+  warningCount = input(0);
+  loading = input(false);
   navigate = output<string>();
   refreshRequested = output<void>();
 }
