@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+* { box-sizing: border-box; }
+html { color-scheme: dark; background: #101117; scroll-behavior: smooth; }
+body { margin: 0; font-family: Inter, 'DM Sans', sans-serif; background: #101117; }
+button, input { font: inherit; }
