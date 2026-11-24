@@ -40,7 +40,7 @@ The BFF currently reads:
 
 Requests use `Authorization: <API key>` and `x-oid: <agency OID>`, matching the Infloww API reference. The configured base URL defaults to `https://openapi.infloww.com`. Pagination follows response cursors; date ranges are split into at most 31-day windows; creator report calls are grouped into batches of at most 10 IDs; 429 and 5xx responses retry with backoff. Endpoint failures are returned as warnings while other dashboard sections continue loading. Dashboard responses are cached in memory for five minutes by range.
 
-Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOUNT_DIVISOR` only if the account's API amount units differ from cents. The API can omit metrics based on permissions or reporting availability; missing values render as zero/empty states. In live data, period change is shown as 0 until a previous-period comparison is implemented; demo percentages are illustrative.
+Only `GET` is accepted under `/api`. The server has no write proxy. Adjust `AMOUNT_DIVISOR` only if the account's API amount units differ from cents. The API can omit metrics based on permissions or reporting availability; missing values render as zero/empty states. Live period comparisons are marked unavailable until a previous-period comparison is implemented; demo percentages are illustrative.
 
 ## Project structure
 
